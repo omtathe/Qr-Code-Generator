@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, render_template_string
+from flask import Flask, request, send_file, render_template_string, abort
 import qrcode
 import io
 
@@ -85,10 +85,14 @@ def home():
     return render_template_string(HTML_PAGE)
 
 
+# Only allow POST requests
 @app.route("/generate", methods=["POST"])
 def generate():
 
     data = request.form.get("data")
+
+    if not data:
+        abort(400)
 
     qr = qrcode.QRCode(
         version=1,
@@ -106,6 +110,12 @@ def generate():
     img_io.seek(0)
 
     return send_file(img_io, mimetype="image/png")
+
+
+# Block direct GET requests to /generate
+@app.route("/generate", methods=["GET"])
+def block_generate():
+    return "Invalid request method", 405
 
 
 if __name__ == "__main__":
